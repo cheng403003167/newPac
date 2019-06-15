@@ -1,13 +1,29 @@
-(async()=>{
-  const puppeteer = require('puppeteer');
-  const browser = await puppeteer.launch({headless:true});
-  const page = await browser.newPage();
-  await Promise.all([
-    page.coverage.startCSSCoverage(),
-    page.coverage.startJSCoverage()
-  ]);
-  await page.emulate(iPhone);
-  await page.goto('http://m.gzhuiai.net/wa/jf610_jt/');
-  
-  await browser.close();
-})()
+class getImgData {
+  constructor(){
+    this.puppeteer = require('puppeteer');
+  }
+  async init(){
+    this.browser = await this.puppeteer.launch({headless:true});
+    this.page = await this.browser.newPage();
+    await this.getData();
+  }
+  async getData(){
+    this.page.on('domcontentloaded',async ()=>{
+      const result= await this.page.evaluate(()=>{
+        var lisL = $(".commentlist li").length;
+        var linkArr = [];
+        for(var t = 0;t<lisL;t++){
+          if($(".commentlist li").eq(t).attr('id') != undefined){
+            linkArr.push('http:'+$(".commentlist li").eq(t).find('.text').find('p').find('a').attr('href'));
+          }
+        }
+        return linkArr;
+      });
+      console.log(result);
+    })
+    await this.page.goto('http://jandan.net/pic/page-106#comments');
+    // await browser.close();
+  }
+}
+let sets = new getImgData();
+sets.init()
