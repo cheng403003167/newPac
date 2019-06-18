@@ -3,6 +3,7 @@
 # Logs
 logs
 *.log
+disk
 npm-debug.log*
 
 # Dependency directories

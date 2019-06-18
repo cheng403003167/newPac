@@ -2,7 +2,7 @@ const EventEmitter = require('events');
 const fs = require('fs');
 const path = require('path');
 const imgDup = require('./duplex.js');
-class getImgClass extends EventEmitter {
+module.exports = class getImgClass extends EventEmitter {
   constructor(img_arr,encoding){
     super();
     this.http = require('http');
@@ -12,7 +12,9 @@ class getImgClass extends EventEmitter {
     this.img_index = 0; //初始下标
     this.img_err_time = 0;  //下载错误计数，3次后就不下载
   }
-  init(dir){
+  init(dir,arrs){
+    this.localData = arrs;
+    this.dir_con = fs.readdirSync(dir);
     fs.access(dir,fs.constants.F_OK,(err)=>{
       if(err){
         fs.mkdirSync(dir)
@@ -23,20 +25,29 @@ class getImgClass extends EventEmitter {
   }
   getImgData(src){
     // 获取图片数据保存到 data_temp
-    this.imgDup_ins = new imgDup();
-    this.http.get(src,(res)=>{
-      res.setEncoding(this.encoding);
-      let data_temp = ''
-      res.on('data',(chunk)=>{
-        data_temp += chunk;
-      }).on('end',()=>{
-        console.log('数据传输完成');
-        this.imgDup_ins.write(data_temp,this.encoding);
-        this.saveData(src,this.dir);
+    let name = path.basename(src); //获取文件名
+    if(!this.dir_con.includes(name)){
+      this.imgDup_ins = new imgDup();
+      this.http.get(src,(res)=>{
+        res.setEncoding(this.encoding);
+        let data_temp = ''
+        res.on('data',(chunk)=>{
+          data_temp += chunk;
+        }).on('end',()=>{
+          this.imgDup_ins.write(data_temp,this.encoding);
+          this.saveData(src,this.dir);
+        })
+      }).on('error',(e)=>{
+        console.error(`${src}---请求错误`)
       })
-    }).on('error',(e)=>{
-      console.error(`${src}---请求错误`)
-    })
+    }else{
+      console.log(`${name}----已存在`);
+      if(++this.img_index<this.img_arr.length){
+        this.getImgData(this.img_arr[this.img_index]);
+      }else{
+        this.saveLocalData(this.localData);
+      }
+    }
   }
   saveData(src,dir=''){
     // 保存数据
@@ -45,9 +56,11 @@ class getImgClass extends EventEmitter {
     this.imgDup_ins.pipe(fsF);
     fsF.on('finish',()=>{
       this.img_err_time = 0;
-      console.log(`${src}----已写入`)
+      console.log(`${src}----已写入`);
       if(++this.img_index<this.img_arr.length){
         this.getImgData(this.img_arr[this.img_index]);
+      }else{
+        this.saveLocalData(this.localData);
       }
     }).on('error',()=>{
       this.img_err_time++;
@@ -57,7 +70,17 @@ class getImgClass extends EventEmitter {
       }else{
         if(++this.img_index<this.img_arr.length){
           this.getImgData(this.img_arr[this.img_index]);
+        }else{
+          this.saveLocalData(this.localData);
         }
+      }
+    })
+  }
+  saveLocalData(data){
+    fs.writeFile('src/bin/downloadedData.txt',data.join(',')+',',(err)=>{
+      if(err){
+        console.log('写入downloadedData文件失败')
+        throw err;
       }
     })
   }
@@ -66,4 +89,4 @@ class getImgClass extends EventEmitter {
 // 测试代码
 // var s = ['http://wx4.sinaimg.cn/large/6b28c23aly1g3zf0cfq53g20cs0cshdy.gif','http://wx3.sinaimg.cn/large/dc106893ly1g3ytecgp6ag209l09lhdw.gif'];
 // const datas = new getImgClass(s,'binary');
-// datas.init('disk');
+// datas.init('disk',[112,111,110]);
