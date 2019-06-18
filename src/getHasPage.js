@@ -10,4 +10,5 @@ if(dataR.length>0){
     }
   }
   console.log('中间缺失的页为',noP);
+  console.log('一共有',dataR.length-1,'页');
 }
