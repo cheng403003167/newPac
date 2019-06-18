@@ -70,7 +70,7 @@ class getImgData extends EventEmitter {
               linkArr.push('http:'+$(".commentlist li").eq(t).find('.text').find('p').find('a').attr('href'));
             }
           }
-        }                    
+        }
         return linkArr;
       });
       result.forEach((item)=>{
