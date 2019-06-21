@@ -4,11 +4,12 @@ class getImgData extends EventEmitter {
   constructor({startPage=0,speed=5}){
     super();
     this.puppeteer = require('puppeteer');
-    this.temp_data = [];
-    this.get_page_number = [];
-    this.startPage = 0;
-    this.currentPage = 0;
-    this.speed = speed;
+    this.temp_data = []; //获取页面的数据
+    this.get_page_number = [];  //获取页面的页码
+    this.startPage = 0;  //查询开始页面
+    this.currentPage = 0; //当前查询页面
+    this.timePageIndex = 0; //获取时间页面
+    this.speed = speed;  //获取页面总数
     if(startPage>0){
       this.startPage = startPage
     }
@@ -17,8 +18,19 @@ class getImgData extends EventEmitter {
     await this.getLocalData();
     this.browser = await this.puppeteer.launch({headless:true});
     this.page = await this.browser.newPage();
+    this.timePage = await this.browser.newPage();
     await this.page.setRequestInterception(true);
     this.page.on('request', interceptedRequest => {
+      if (interceptedRequest.url().endsWith('.png') || interceptedRequest.url().endsWith('.jpg') || interceptedRequest.url().endsWith('.gif')){
+        interceptedRequest.abort();
+      }else if(interceptedRequest.url().endsWith('.js') && interceptedRequest.url().indexOf('jquery.min.js') < 0 ){
+        interceptedRequest.abort();
+      }else{
+        interceptedRequest.continue();
+      }
+    });
+    await this.timePage.setRequestInterception(true);
+    this.timePage.on('request', interceptedRequest => {
       if (interceptedRequest.url().endsWith('.png') || interceptedRequest.url().endsWith('.jpg') || interceptedRequest.url().endsWith('.gif')){
         interceptedRequest.abort();
       }else if(interceptedRequest.url().endsWith('.js') && interceptedRequest.url().indexOf('jquery.min.js') < 0 ){
@@ -65,9 +77,13 @@ class getImgData extends EventEmitter {
         var lisL = $(".commentlist li").length;
         var linkArr = [];
         for(var t = 0;t<lisL;t++){
+          var s = {};
           if($(".commentlist li").eq(t).attr('id') != undefined){
             if($(".commentlist li").eq(t).find('.text').find('p').find('a').attr('href') != 'javascript:;'){
-              linkArr.push('http:'+$(".commentlist li").eq(t).find('.text').find('p').find('a').attr('href'));
+              s.link = 'http:'+$(".commentlist li").eq(t).find('.text').find('p').find('a').attr('href');
+              s.userName = $(".commentlist li").eq(t).find('.author').find('strong').text();
+              s.timeLink = 'http://jandan.net'+$(".commentlist li").eq(t).find('.righttext').find('a').attr('href');
+              linkArr.push(s);
             }
           }
         }
@@ -82,17 +98,40 @@ class getImgData extends EventEmitter {
         await this.goUrl()
         return true;
       }else{
-        setTimeout(async ()=>{
-          await this.closeB();
-        },500)
         this.get_page_number = this.dataSortRename(this.get_page_number);
-        this.emit('allDateCom');
+        await this.getUpdateTime();
       }
     });
     await this.goUrl()
   }
   async goUrl(){
     await this.page.goto(`http://jandan.net/pic/page-${this.currentPage}#comments`);
+  }
+  async getUpdateTime(){
+    this.timePage.on('domcontentloaded',async ()=>{
+      const times = await this.timePage.evaluate(()=>{
+        var t = $(".comment-topic").html();
+        var startI = t.indexOf('发布于');
+        var endI = t.indexOf('<hr>');
+        var ss = t.slice(startI+4,endI).trim().replace('T',' ').replace('+08:00','');
+        return ss;
+      });
+      this.temp_data[this.timePageIndex].update = times;
+      if(this.timePageIndex>=this.temp_data.length-1){
+        setTimeout(async ()=>{
+          await this.closeB();
+        },500)
+        this.emit('allDateCom');
+      }else{
+        this.timePageIndex++;
+        await this.goTimeUrl();
+      }
+    });
+
+    await this.goTimeUrl();
+  }
+  async goTimeUrl(){
+    await this.timePage.goto(this.temp_data[this.timePageIndex].timeLink);
   }
   async getLocalData(){
     await fs.open('src/bin/downloadedData.txt', 'r', async (err, fd) => {
@@ -129,10 +168,9 @@ class getImgData extends EventEmitter {
 }
 module.exports = getImgData;
 // (async ()=>{
-//   let sets = await new getImgData({startPage:0,speed:5});
+//   let sets = await new getImgData({startPage:0,speed:1});
 //   sets.on('allDateCom',async ()=>{
 //     console.log(sets.temp_data);
-//     console.log(sets.get_page_number);
 //   })
 //   await sets.init()
 // })()

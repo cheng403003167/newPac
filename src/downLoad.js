@@ -20,7 +20,7 @@ module.exports = class getImgClass extends EventEmitter {
         fs.mkdirSync(dir)
       }
       this.dir = dir;
-      this.getImgData(this.img_arr[this.img_index]);
+      this.getImgData(this.img_arr[this.img_index].link);
     })
   }
   getImgData(src){
@@ -43,7 +43,7 @@ module.exports = class getImgClass extends EventEmitter {
     }else{
       console.log(`${name}----已存在`);
       if(++this.img_index<this.img_arr.length){
-        this.getImgData(this.img_arr[this.img_index]);
+        this.getImgData(this.img_arr[this.img_index].link);
       }else{
         this.saveLocalData(this.localData);
       }
@@ -58,7 +58,7 @@ module.exports = class getImgClass extends EventEmitter {
       this.img_err_time = 0;
       console.log(`${src}----已写入`);
       if(++this.img_index<this.img_arr.length){
-        this.getImgData(this.img_arr[this.img_index]);
+        this.getImgData(this.img_arr[this.img_index].link);
       }else{
         this.saveLocalData(this.localData);
       }
@@ -69,7 +69,7 @@ module.exports = class getImgClass extends EventEmitter {
         this.getImgData(src);
       }else{
         if(++this.img_index<this.img_arr.length){
-          this.getImgData(this.img_arr[this.img_index]);
+          this.getImgData(this.img_arr[this.img_index].link);
         }else{
           this.saveLocalData(this.localData);
         }
