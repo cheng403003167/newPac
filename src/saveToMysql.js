@@ -15,6 +15,7 @@ module.exports =  class mysqlData extends event {
     this.imgData = [];  //数据库中图片列表
   }
   async init(){
+    
     this.connection = await mysql.createConnection(this.config);
     await this.getUserName();
     await this.getImgData();
