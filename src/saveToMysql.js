@@ -19,6 +19,7 @@ module.exports =  class mysqlData extends event {
     await this.getUserName();
     await this.getImgData();
     await this.juiceUser();
+    await this.juiceImg();
   }
   async getUserName(){
     return new Promise((resolve,reject)=>{
@@ -48,25 +49,17 @@ module.exports =  class mysqlData extends event {
   }
   async juiceUser(){
     for(var s = 0;s<this.newData.length;s++){
-      var noE = false,hasE = false;
-      if(this.userNameData.length != 0){
-        for(var t = 0;t<this.userNameData.length;t++){
-          if(this.newData[s].userName == this.userNameData[t].userName){
-            this.newData[s].userId = this.userNameData[t].id;
-            hasE = true;
-          }
-          if(t == this.userNameData.length-1){
-            noE = true;
-          }
+      var hasE = false;
+      for(var t = 0;t<this.userNameData.length;t++){
+        if(this.newData[s].userName == this.userNameData[t].userName){
+          this.newData[s].userId = this.userNameData[t].id;
+          hasE = true;
         }
-      }else{
-        noE = true;
       }
-      if(noE && !hasE){
+      if(!hasE){
         await this.updataUserName(this.newData[s].userName,s)
       }
     }
-    await this.juiceImg();
   }
   async updataUserName(name,s){
     return new Promise((resolve,reject)=>{
@@ -77,28 +70,21 @@ module.exports =  class mysqlData extends event {
           return;
         }
         this.newData[s].userId = result.insertId;
-        this.userNameData.push({id:result.insertId,userName:name})
+        this.userNameData.push({id:result.insertId,userName:name});
         resolve(result)
       })
     })
   }
   async juiceImg(){
     for(var s = 0;s<this.newData.length;s++){
-      var imgnoE = false,imghasE = false;
-      if(this.imgData.length != 0){
-        for(var t = 0;t<this.imgData.length;t++){
-          let name = path.basename(this.newData[s].link); //获取文件名
-          if(name == this.imgData[t].imgName){
-            imghasE = true;
-          }
-          if(t == this.imgData.length-1){
-            imgnoE = true;
-          }
+      var imghasE = false;
+      for(var t = 0;t<this.imgData.length;t++){
+        let name = path.basename(this.newData[s].link); //获取文件名
+        if(name == this.imgData[t].imgName){
+          imghasE = true;
         }
-      }else{
-        imgnoE = true;
       }
-      if(imgnoE && !imghasE){
+      if(!imghasE){
         await this.updataImg(this.newData[s])
       }
     }
