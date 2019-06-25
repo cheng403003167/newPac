@@ -8,14 +8,19 @@ const saveMysql = require('./saveToMysql.js');
     let sets = await new getImgData({startPage:startPage,speed:10});
     sets.on('allDateCom',async ()=>{
       startPage = sets.currentPage;
-      const datas = await new getImgClass(sets.temp_data,'binary');
-      datas.on('allDataCom', async ()=>{
+      // const datas = await new getImgClass(sets.temp_data,'binary');
+      // datas.on('allDataCom', async ()=>{
+      //   if(startPage-10 >= 0){
+      //     await getData();
+      //   }
+      // })
+      // await datas.init('disk',sets.get_page_number);
+      var s = await new saveMysql(sets.temp_data);
+      s.on('saveDataCom',async ()=>{
         if(startPage-10 >= 0){
           await getData();
         }
       })
-      await datas.init('disk',sets.get_page_number);
-      var s = await new saveMysql(sets.temp_data);
       await s.conn();
       await s.init();
     })

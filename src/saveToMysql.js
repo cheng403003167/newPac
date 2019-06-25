@@ -1,7 +1,7 @@
 var mysql = require('mysql');
-var event = require('events');
+const EventEmitter = require('events');
 const path = require('path');
-module.exports =  class mysqlData extends event {
+module.exports =  class mysqlData extends EventEmitter {
   constructor(data){
     super();
     this.config = {
@@ -92,6 +92,7 @@ module.exports =  class mysqlData extends event {
     }
     console.log('存入数据完成')
     this.connection.end();
+    this.emit('saveDataCom')
   }
   async juiceOtherImg(){
     this.getOtherImg = await this.getImgData();

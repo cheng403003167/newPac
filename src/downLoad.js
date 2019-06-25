@@ -37,7 +37,7 @@ module.exports = class getImgClass extends EventEmitter {
           this.imgDup_ins.write(data_temp,this.encoding);
           this.saveData(src,this.dir);
         })
-      }).on('error',(e)=>{
+      }).on('error',(e)=>{   
         console.error(`${src}---请求错误`)
       })
     }else{
