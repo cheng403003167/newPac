@@ -22,7 +22,7 @@ class getImgData extends EventEmitter {
     await this.s.juiceOtherImg();
     this.mysqlData = this.s.getOtherImg;
     await this.getLocalData();
-    this.browser = await this.puppeteer.launch({headless:true});
+    this.browser = await this.puppeteer.launch({headless:true,args:['--no-sandbox']});
     this.page = await this.browser.newPage();
     this.timePage = await this.browser.newPage();
     await this.page.setRequestInterception(true);
