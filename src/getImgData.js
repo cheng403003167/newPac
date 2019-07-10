@@ -94,12 +94,7 @@ class getImgData extends EventEmitter {
                   else
                       val += "," + s.userName.charCodeAt(i).toString(16);
               }
-              // var str = "6211,7231,5317,4eac,5929,5b89,95e8";
-              // var val="";
-              // var arr = str.split(",");
-              // for(var i = 0; i < arr.length; i++){
-              // 　　val += String.fromCharCode(parseInt(arr[i],16));
-              // }
+              
               s.link = 'http:'+$(".commentlist li").eq(t).find('.text').find('p').find('a').attr('href');
               s.userName = val;
               s.timeLink = 'http://jandan.net'+$(".commentlist li").eq(t).find('.righttext').find('a').attr('href');
@@ -140,7 +135,7 @@ class getImgData extends EventEmitter {
       if(this.timePageIndex>=this.temp_data.length-1){
         setTimeout(async ()=>{
           await this.closeB();
-        },500)
+        },2000)
         await this.s.connection.end();
         this.emit('allDateCom');
       }else{
