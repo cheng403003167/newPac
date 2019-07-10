@@ -1,7 +1,7 @@
 var mysql = require('mysql');
-var event = require('events');
+const EventEmitter = require('events');
 const path = require('path');
-module.exports =  class mysqlData extends event {
+module.exports =  class mysqlData extends EventEmitter {
   constructor(data){
     super();
     this.config = {
@@ -14,9 +14,10 @@ module.exports =  class mysqlData extends event {
     this.userNameData = [];  //数据库中用户列表
     this.imgData = [];  //数据库中图片列表
   }
-  async init(){
-    
+  async conn(){
     this.connection = await mysql.createConnection(this.config);
+  }
+  async init(){
     await this.getUserName();
     await this.getImgData();
     await this.juiceUser();
@@ -44,7 +45,7 @@ module.exports =  class mysqlData extends event {
           return;
         }
         this.imgData = result;
-        resolve()
+        resolve(result)
       })
     })
   }
@@ -91,6 +92,11 @@ module.exports =  class mysqlData extends event {
     }
     console.log('存入数据完成')
     this.connection.end();
+    this.emit('saveDataCom')
+  }
+  async juiceOtherImg(){
+    this.getOtherImg = await this.getImgData();
+
   }
   async updataImg(data){
     let name = path.basename(data.link); //获取文件名

@@ -26,7 +26,7 @@ module.exports = class getImgClass extends EventEmitter {
   getImgData(src){
     // 获取图片数据保存到 data_temp
     let name = path.basename(src); //获取文件名
-    if(!this.dir_con.includes(name)){
+    if(name.indexOf('und') < 0 && !this.dir_con.includes(name)){
       this.imgDup_ins = new imgDup();
       this.http.get(src,(res)=>{
         res.setEncoding(this.encoding);
@@ -37,7 +37,7 @@ module.exports = class getImgClass extends EventEmitter {
           this.imgDup_ins.write(data_temp,this.encoding);
           this.saveData(src,this.dir);
         })
-      }).on('error',(e)=>{
+      }).on('error',(e)=>{   
         console.error(`${src}---请求错误`)
       })
     }else{
@@ -45,7 +45,7 @@ module.exports = class getImgClass extends EventEmitter {
       if(++this.img_index<this.img_arr.length){
         this.getImgData(this.img_arr[this.img_index].link);
       }else{
-        this.saveLocalData(this.localData);
+        this.emit('allDataCom');
       }
     }
   }
@@ -60,7 +60,7 @@ module.exports = class getImgClass extends EventEmitter {
       if(++this.img_index<this.img_arr.length){
         this.getImgData(this.img_arr[this.img_index].link);
       }else{
-        this.saveLocalData(this.localData);
+        this.emit('allDataCom');
       }
     }).on('error',()=>{
       this.img_err_time++;
@@ -70,17 +70,7 @@ module.exports = class getImgClass extends EventEmitter {
       }else{
         if(++this.img_index<this.img_arr.length){
           this.getImgData(this.img_arr[this.img_index].link);
-        }else{
-          this.saveLocalData(this.localData);
         }
-      }
-    })
-  }
-  saveLocalData(data){
-    fs.writeFile('src/bin/downloadedData.txt',data.join(',')+',',(err)=>{
-      if(err){
-        console.log('写入downloadedData文件失败')
-        throw err;
       }
     })
   }

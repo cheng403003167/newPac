@@ -1,5 +1,7 @@
 const EventEmitter = require('events');
 const fs = require('fs');
+const path = require('path');
+const saveMysql = require('./saveToMysql.js');
 class getImgData extends EventEmitter {
   constructor({startPage=0,speed=5}){
     super();
@@ -15,6 +17,10 @@ class getImgData extends EventEmitter {
     }
   }
   async init(){
+    this.s = await new saveMysql();
+    await this.s.conn();
+    await this.s.juiceOtherImg();
+    this.mysqlData = this.s.getOtherImg;
     await this.getLocalData();
     this.browser = await this.puppeteer.launch({headless:true});
     this.page = await this.browser.newPage();
@@ -80,8 +86,17 @@ class getImgData extends EventEmitter {
           var s = {};
           if($(".commentlist li").eq(t).attr('id') != undefined){
             if($(".commentlist li").eq(t).find('.text').find('p').find('a').attr('href') != 'javascript:;'){
-              s.link = 'http:'+$(".commentlist li").eq(t).find('.text').find('p').find('a').attr('href');
               s.userName = $(".commentlist li").eq(t).find('.author').find('strong').text();
+              var val = "";
+              for(var i = 0; i < s.userName.length; i++){
+                  if (val == "")
+                      val = s.userName.charCodeAt(i).toString(16);
+                  else
+                      val += "," + s.userName.charCodeAt(i).toString(16);
+              }
+              
+              s.link = 'http:'+$(".commentlist li").eq(t).find('.text').find('p').find('a').attr('href');
+              s.userName = val;
               s.timeLink = 'http://jandan.net'+$(".commentlist li").eq(t).find('.righttext').find('a').attr('href');
               linkArr.push(s);
             }
@@ -120,18 +135,29 @@ class getImgData extends EventEmitter {
       if(this.timePageIndex>=this.temp_data.length-1){
         setTimeout(async ()=>{
           await this.closeB();
-        },500)
+        },2000)
+        await this.s.connection.end();
         this.emit('allDateCom');
       }else{
         this.timePageIndex++;
         await this.goTimeUrl();
       }
     });
-
     await this.goTimeUrl();
   }
   async goTimeUrl(){
-    await this.timePage.goto(this.temp_data[this.timePageIndex].timeLink);
+    let hasL = false,that = this;
+    this.mysqlData.forEach((item)=>{
+      if(item.imgName == path.basename(that.temp_data[that.timePageIndex].link)){
+        hasL = true;
+      }
+    })
+    if(hasL && this.timePageIndex<this.temp_data.length-1){
+      this.timePageIndex++;
+      this.goTimeUrl();
+    }else{
+      await this.timePage.goto(this.temp_data[this.timePageIndex].timeLink);
+    }
   }
   async getLocalData(){
     await fs.open('src/bin/downloadedData.txt', 'r', async (err, fd) => {
